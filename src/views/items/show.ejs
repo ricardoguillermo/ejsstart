@@ -1,21 +1,42 @@
 <article class="detail">
   <h1><%= item.title %></h1>
   <div class="media">
-    <img src="<%= item.imageUrl || 'https://placehold.co/800x500?text=Imagen' %>" alt="<%= item.title %>" />
+    <img
+      src="<%= item.imageUrl || 'https://placehold.co/800x500?text=Imagen' %>"
+      alt="<%= item.title %>"
+    />
     <div class="info">
-      <% if (item.category) { %><p><strong>Categoría:</strong> <%= item.category %></p><% } %>
-      <% if (item.audioUrl) { %>
-        <p><strong>Audio:</strong></p>
-        <audio controls src="<%= item.audioUrl %>"></audio>
-      <% } %>
-      <% if (item.videoUrl) { %>
-        <p><strong>Video:</strong></p>
-        <video controls width="480" src="<%= item.videoUrl %>"></video>
+      <% if (item.category) { %>
+      <p><strong>Categoría:</strong> <%= item.category %></p>
+      <% } %> <% if (item.audioUrl) { %>
+      <p><strong>Audio:</strong></p>
+      <audio controls src="<%= item.audioUrl %>"></audio>
+      <% } %> <% if (item.videoUrl) { %>
+      <p><strong>Video:</strong></p>
+      <video controls width="480" src="<%= item.videoUrl %>"></video>
       <% } %>
     </div>
   </div>
   <p class="desc"><%= item.description %></p>
   <% if (item.comments) { %>
-    <div class="comments"><strong>Comentarios:</strong><br><%= item.comments %></div>
+  <div class="comments">
+    <strong>Comentarios:</strong><br /><%= item.comments %>
+  </div>
   <% } %>
 </article>
+<section class="qr">
+  <h2>QR de esta pieza</h2>
+  <img
+    src="/qr/<%= item.id %>?format=svg&size=280"
+    alt="QR <%= item.title %>"
+  />
+  <p>
+    <a
+      class="btn"
+      href="/qr/<%= item.id %>?format=png&size=1024"
+      download="qr-<%= item.id %>.png"
+      >Descargar PNG</a
+    >
+    <a class="btn-secondary" href="/items/<%= item.id %>">Probar enlace</a>
+  </p>
+</section>

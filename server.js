@@ -10,6 +10,7 @@ import expressLayouts from "express-ejs-layouts";
 import indexRoutes from "./src/routes/index.js";
 import authRoutes from "./src/routes/auth.js";
 import itemsRoutes from "./src/routes/items.js";
+import qrRoutes from "./src/routes/qr.js";
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "src", "views"));
 app.use(expressLayouts);
 app.set("layout", "layout");
+app.set("trust proxy", 1);
 
 // Middleware
 app.use(express.urlencoded({ extended: true }));
@@ -32,14 +34,16 @@ app.use(methodOverride("_method"));
 app.use(morgan("dev"));
 app.use(express.static(path.join(__dirname, "public")));
 
+app.use("/", qrRoutes);
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "dev_secret",
     resave: false,
     saveUninitialized: false,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 4 // 4 hours
-    }
+      maxAge: 1000 * 60 * 60 * 4, // 4 hours
+    },
   })
 );
 

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "a9e8a9f0-1111-4444-aaaa-000000000001",
+    "title": "Pata de vaca",
+    "category": "Plantas",
+    "imageUrl": "https://placehold.co/800x500?text=Pata+de+vaca",
+    "audioUrl": "",
+    "videoUrl": "",
+    "description": "Árbol ornamental con hojas en forma de pezuña. Ejemplo de ficha para probar el sistema.",
+    "comments": "Podrías enlazar esta ficha a un QR."
+  },
+  {
+    "id": "a9e8a9f0-1111-4444-aaaa-000000000002",
+    "title": "Afiches 1970",
+    "category": "Historia",
+    "imageUrl": "https://placehold.co/800x500?text=Afiches+1970",
+    "audioUrl": "",
+    "videoUrl": "",
+    "description": "Colección de afiches históricos. Ejemplo con imagen de prueba.",
+    "comments": ""
+  }
+]

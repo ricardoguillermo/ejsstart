@@ -1,0 +1,32 @@
+<section class="hero">
+  <h1>Museo / Piezas</h1>
+  <form class="filters" method="get" action="/">
+    <input type="search" name="q" placeholder="Buscar..." value="<%= q %>" />
+    <select name="category">
+      <option value="">Todas las categorías</option>
+      <% categories.forEach(c => { %>
+        <option value="<%= c %>" <%= (String(c)===String(query.category)) ? 'selected' : '' %>><%= c %></option>
+      <% }) %>
+    </select>
+    <button>Filtrar</button>
+  </form>
+</section>
+
+<section class="grid">
+  <% if (items.length === 0) { %>
+    <p>No hay resultados.</p>
+  <% } %>
+  <% items.forEach(item => { %>
+    <article class="card">
+      <a href="/items/<%= item.id %>">
+        <img src="<%= item.imageUrl || 'https://placehold.co/600x400?text=Imagen' %>" alt="<%= item.title %>" />
+      </a>
+      <div class="card-body">
+        <h3><a href="/items/<%= item.id %>"><%= item.title %></a></h3>
+        <% if (item.category) { %><span class="badge"><%= item.category %></span><% } %>
+        <p><%= (item.description || '').slice(0, 160) %>...</p>
+        <a class="btn" href="/items/<%= item.id %>">Ver</a>
+      </div>
+    </article>
+  <% }) %>
+</section>

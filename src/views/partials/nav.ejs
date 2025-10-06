@@ -1,0 +1,11 @@
+<nav class="nav">
+  <a href="/">Inicio</a>
+  <% if (currentUser) { %>
+    <a href="/admin">Admin</a>
+    <form action="/logout" method="post" style="display:inline">
+      <button class="btn-link">Salir (<%= currentUser.username %>)</button>
+    </form>
+  <% } else { %>
+    <a href="/login">Ingresar</a>
+  <% } %>
+</nav>

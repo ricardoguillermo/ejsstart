@@ -1,0 +1,15 @@
+<h1>Ingresar</h1>
+<% if (typeof error !== 'undefined') { %>
+  <div class="alert"><%= error %></div>
+<% } %>
+<form method="post" action="/login" class="form compact">
+  <label>Usuario
+    <input type="text" name="username" required />
+  </label>
+  <label>Clave
+    <input type="password" name="password" required />
+  </label>
+  <div class="actions">
+    <button type="submit">Entrar</button>
+  </div>
+</form>

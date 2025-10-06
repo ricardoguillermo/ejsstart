@@ -1,0 +1,29 @@
+<h1>Admin</h1>
+
+<p><a class="btn" href="/admin/items/new">➕ Nueva pieza</a></p>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>Imagen</th>
+      <th>Título</th>
+      <th>Categoría</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+  <% items.forEach(item => { %>
+    <tr>
+      <td><img class="thumb" src="<%= item.imageUrl || 'https://placehold.co/120x80' %>" alt=""></td>
+      <td><a href="/items/<%= item.id %>"><%= item.title %></a></td>
+      <td><%= item.category || '' %></td>
+      <td>
+        <a class="btn-small" href="/admin/items/<%= item.id %>/edit">Editar</a>
+        <form action="/admin/items/<%= item.id %>?_method=DELETE" method="post" style="display:inline">
+          <button class="btn-small danger" onclick="return confirm('¿Eliminar?')">Borrar</button>
+        </form>
+      </td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table>

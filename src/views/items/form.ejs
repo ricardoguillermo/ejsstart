@@ -1,0 +1,30 @@
+<h1><%= item.id ? 'Editar pieza' : 'Nueva pieza' %></h1>
+
+<form action="<%= action %>" method="post" class="form">
+  <label>Título
+    <input type="text" name="title" value="<%= item.title || '' %>" required />
+  </label>
+  <label>Categoría
+    <input type="text" name="category" value="<%= item.category || '' %>" />
+  </label>
+  <label>Imagen (URL)
+    <input type="url" name="imageUrl" value="<%= item.imageUrl || '' %>" />
+  </label>
+  <label>Audio (URL)
+    <input type="url" name="audioUrl" value="<%= item.audioUrl || '' %>" />
+  </label>
+  <label>Video (URL)
+    <input type="url" name="videoUrl" value="<%= item.videoUrl || '' %>" />
+  </label>
+  <label>Descripción
+    <textarea name="description" rows="6"><%= item.description || '' %></textarea>
+  </label>
+  <label>Comentarios
+    <textarea name="comments" rows="3"><%= item.comments || '' %></textarea>
+  </label>
+
+  <div class="actions">
+    <button type="submit">Guardar</button>
+    <a class="btn-secondary" href="/admin">Cancelar</a>
+  </div>
+</form>

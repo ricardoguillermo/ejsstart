@@ -1,0 +1,18 @@
+{
+  "items": [
+    {
+      "id": "001",
+      "title": "León",
+      "category": "Mamíferos",
+      "description": "...",
+      "imageUrl": "https://tu-cdn/media/img/Leon.jpg"
+    },
+    {
+      "id": "002",
+      "title": "Cóndor",
+      "category": "Aves",
+      "description": "...",
+      "imageUrl": "https://tu-cdn/media/img/Condor.jpg"
+    }
+  ]
+}

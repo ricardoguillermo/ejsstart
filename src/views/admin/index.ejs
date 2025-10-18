@@ -1,50 +1,364 @@
-<h1>Admin</h1>
+<section>
+  <h1>Panel de administración</h1>
 
-<p><a class="btn" href="/admin/items/new">➕ Nueva pieza</a></p>
+  <form
+    id="uform"
+    onsubmit="return false;"
+    style="
+      margin: 16px 0;
+      padding: 12px;
+      border: 1px solid #eee;
+      border-radius: 10px;
+    "
+  >
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+      <div>
+        <label>Archivo</label>
+        <input
+          id="file"
+          type="file"
+          accept="image/*,audio/*,video/*"
+          required
+        />
+      </div>
+      <div>
+        <label>Carpeta</label>
+        <select id="folder">
+          <option value="img">img</option>
+          <option value="audio">audio</option>
+          <option value="video">video</option>
+          <option value="">(raíz)</option>
+        </select>
+      </div>
+      <div>
+        <label>Subcarpeta (opcional)</label>
+        <input id="subdir" placeholder="ej: plantas" />
+      </div>
+      <div>
+        <label>Nombre opcional (sin espacios)</label>
+        <input id="customName" placeholder="ej: hoja_001.jpg" />
+      </div>
+    </div>
 
-<table class="table">
+    <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center">
+      <button id="btnUp">Subir a Bunny</button>
+      <span id="status"></span>
+    </div>
+  </form>
+
+  <pre
+    id="out"
+    style="
+      background: #f7f7f9;
+      border: 1px dashed #ccc;
+      padding: 10px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+    "
+  >
+Salida...</pre
+  >
+</section>
+<hr />
+
+<h2>Archivos en Bunny</h2>
+<div style="display: flex; gap: 8px; align-items: center; margin: 8px 0">
+  <label>Prefijo</label>
+  <input id="prefix" value="media/img" style="min-width: 260px" />
+  <label>Buscar</label>
+  <input id="qsearch" placeholder="texto..." />
+  <label style="margin-left: 8px">
+    <input type="checkbox" id="rec" checked /> Recursivo
+  </label>
+  <button id="btnList">Listar</button>
+  <button id="btnClear">Mostrar todo</button>
+  <span id="count" style="margin-left: 8px; opacity: 0.7"></span>
+</div>
+
+<table id="tbl" style="width: 100%; border-collapse: collapse">
   <thead>
     <tr>
-      <th>Imagen</th>
-      <th>Título</th>
-      <th>Categoría</th>
-      <th>Acciones</th>
+      <th>Mini</th>
+      <th style="text-align: left">Archivo</th>
+      <th>Size</th>
+      <th>Modif.</th>
+      <th></th>
     </tr>
   </thead>
-  <tbody>
-    <% items.forEach(item => { %>
-    <tr>
-      <td>
-        <img
-          class="thumb"
-          src="<%= item.imageUrl || 'https://placehold.co/120x80' %>"
-          alt=""
-        />
-      </td>
-      <td><a href="/items/<%= item.id %>"><%= item.title %></a></td>
-      <td><%= item.category || '' %></td>
-      <td>
-        <a class="btn-small" href="/admin/items/<%= item.id %>/edit">Editar</a>
-        <form
-          action="/admin/items/<%= item.id %>?_method=DELETE"
-          method="post"
-          style="display: inline"
-        >
-          <button
-            class="btn-small danger"
-            onclick="return confirm('¿Eliminar?')"
-          >
-            Borrar
-          </button>
-        </form>
-        <a
-          class="btn-small"
-          href="/qr/<%= item.id %>?format=png&size=800"
-          target="_blank"
-          >QR</a
-        >
-      </td>
-    </tr>
-    <% }) %>
-  </tbody>
+  <tbody></tbody>
 </table>
+
+<h2>Colecciones (persisten en disco Render)</h2>
+<div style="display: flex; gap: 8px; align-items: center; margin: 8px 0">
+  <button id="btnLoadColls">Cargar lista</button>
+  <select id="selColl"></select>
+  <button id="btnUse">Usar como activa</button>
+  <input id="newColl" placeholder="nueva-coleccion" />
+  <button id="btnCreate">Crear</button>
+</div>
+<textarea
+  id="collJson"
+  rows="12"
+  style="width: 100%; font-family: ui-monospace, Menlo, Consolas, monospace"
+></textarea>
+<div style="margin-top: 8px; display: flex; gap: 8px">
+  <button id="btnSave">Guardar colección</button>
+  <span id="collStatus"></span>
+</div>
+
+<script>
+  const CDN_HOST = "<%= typeof cdnHost !== 'undefined' ? cdnHost : '' %>";
+  const IMG_RE = /\.(jpe?g|png|gif|webp|svg)$/i;
+
+  function cdnHref(path) {
+    return CDN_HOST ? `https://${CDN_HOST}/${path}` : null;
+  }
+
+  async function listBunny() {
+    const pref =
+      document.getElementById("prefix").value.trim().replace(/\/+$/, "") ||
+      "media";
+    const q = (document.getElementById("qsearch").value || "").trim();
+    const rec = document.getElementById("rec").checked ? "1" : "0";
+
+    const tb = document.querySelector("#tbl tbody");
+    const cnt = document.getElementById("count");
+    tb.innerHTML =
+      '<tr><td colspan="5" style="padding:8px">Cargando…</td></tr>';
+    cnt.textContent = "";
+
+    const params = new URLSearchParams({ prefix: pref, recursive: rec });
+    if (q) params.set("search", q);
+
+    try {
+      const r = await fetch(`/api/bunny/list?${params.toString()}`);
+      const data = await r.json();
+
+      if (!data.ok) {
+        tb.innerHTML = `<tr><td colspan="5" style="color:#b00;padding:8px">
+          Error: ${data.error || r.status}<br><small>${(data.body || "").slice(
+          0,
+          200
+        )}</small>
+        </td></tr>`;
+        return;
+      }
+      cnt.textContent = `(${data.count} archivos)`;
+      if (!data.files?.length) {
+        tb.innerHTML =
+          '<tr><td colspan="5" style="padding:8px">Sin archivos.</td></tr>';
+        return;
+      }
+      tb.innerHTML = "";
+
+      for (const f of data.files) {
+        const href = cdnHref(f.objectName);
+        const isImg = IMG_RE.test(f.objectName);
+        const thumb =
+          isImg && href
+            ? `<img src="${href}" alt="" loading="lazy" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #eee">`
+            : `<div style="width:48px;height:48px;display:grid;place-items:center;border:1px solid #eee;border-radius:6px;opacity:.6">🔗</div>`;
+
+        const nameCell = href
+          ? `<a href="${href}" target="_blank" rel="noreferrer">${f.objectName}</a>`
+          : f.objectName;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style="padding:6px 4px">${thumb}</td>
+          <td style="padding:6px 4px">${nameCell}</td>
+          <td style="padding:6px 4px;text-align:right">${(
+            f.length / 1024
+          ).toFixed(1)} KB</td>
+          <td style="padding:6px 4px;text-align:center">${
+            f.lastChanged ? new Date(f.lastChanged).toLocaleString() : "-"
+          }</td>
+          <td style="padding:6px 4px;text-align:right">
+            <button data-path="${f.objectName}">Borrar</button>
+          </td>`;
+        tb.appendChild(tr);
+      }
+
+      tb.querySelectorAll("button[data-path]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const p = btn.getAttribute("data-path");
+          if (!confirm("¿Borrar " + p + "?")) return;
+          const r = await fetch(`/api/bunny?path=${encodeURIComponent(p)}`, {
+            method: "DELETE",
+          });
+          const j = await r.json();
+          if (!j.ok) return alert("Error al borrar: " + (j.error || r.status));
+          listBunny();
+        });
+      });
+    } catch (e) {
+      tb.innerHTML = `<tr><td colspan="5" style="color:#b00;padding:8px">Error de red: ${e.message}</td></tr>`;
+    }
+  }
+
+  document.getElementById("btnList").addEventListener("click", listBunny);
+  document.getElementById("btnClear").addEventListener("click", () => {
+    document.getElementById("qsearch").value = "";
+    listBunny();
+  });
+
+  // Auto-listar al abrir
+  listBunny();
+</script>
+
+<hr />
+<h2>Alta rápida de pieza</h2>
+<div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px">
+  <div><label>ID</label><input id="quick_id" placeholder="001" /></div>
+  <div>
+    <label>Título</label><input id="quick_title" placeholder="Título" />
+  </div>
+  <div>
+    <label>Categoría</label><input id="quick_cat" placeholder="Categoría" />
+  </div>
+  <div class="col-span-3" style="grid-column: span 3">
+    <label>Imagen URL (CDN)</label>
+    <input id="quick_img" placeholder="https://.../media/img/...jpg" />
+  </div>
+  <div class="col-span-6" style="grid-column: span 6">
+    <label>Descripción</label>
+    <textarea
+      id="quick_desc"
+      rows="2"
+      placeholder="Descripción breve"
+    ></textarea>
+  </div>
+</div>
+<div style="margin-top: 8px; display: flex; gap: 8px; align-items: center">
+  <label>Colección</label>
+  <select id="quick_coll"></select>
+  <button id="btnQuickAdd">Agregar</button>
+  <span id="quick_status"></span>
+</div>
+
+<script>
+  // Rellena colecciones en el selector rápido (reusa la API existente)
+  async function fillQuickColl() {
+    const r = await fetch("/api/collections");
+    const j = await r.json();
+    const sel = document.getElementById("quick_coll");
+    sel.innerHTML = "";
+    (j.list || []).forEach((n) => {
+      const o = document.createElement("option");
+      o.value = o.textContent = n;
+      if (n === j.current) o.selected = true;
+      sel.appendChild(o);
+    });
+  }
+  fillQuickColl();
+
+  // Si acabás de subir algo, podés autocompletar quick_img con el cdnUrl:
+  // (Pegá esto donde procesás el resultado de upload)
+  // if (data.ok && data.cdnUrl) { document.getElementById('quick_img').value = data.cdnUrl; }
+
+  document.getElementById("btnQuickAdd").addEventListener("click", async () => {
+    const coll = document.getElementById("quick_coll").value;
+    const body = {
+      id: document.getElementById("quick_id").value.trim(),
+      title: document.getElementById("quick_title").value.trim(),
+      category: document.getElementById("quick_cat").value.trim(),
+      description: document.getElementById("quick_desc").value.trim(),
+      imageUrl: document.getElementById("quick_img").value.trim(),
+    };
+    if (!body.id || !body.title) {
+      alert("ID y Título son obligatorios");
+      return;
+    }
+
+    const r = await fetch(
+      `/api/collections/${encodeURIComponent(coll)}/items`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      }
+    );
+    const j = await r.json();
+    document.getElementById("quick_status").textContent = j.ok
+      ? "Agregado"
+      : "Error: " + (j.error || r.status);
+    if (j.ok) {
+      setTimeout(
+        () => (document.getElementById("quick_status").textContent = ""),
+        1200
+      );
+    }
+  });
+</script>
+
+<script>
+  async function loadColls() {
+    const r = await fetch("/api/collections");
+    const j = await r.json();
+    const sel = document.getElementById("selColl");
+    sel.innerHTML = "";
+    (j.list || []).forEach((n) => {
+      const o = document.createElement("option");
+      o.value = n;
+      o.textContent = n + (n === j.current ? " (activa)" : "");
+      sel.appendChild(o);
+    });
+    if (j.current) sel.value = j.current;
+    if (sel.value) loadOne(sel.value);
+  }
+  async function loadOne(name) {
+    const r = await fetch("/api/collections/" + encodeURIComponent(name));
+    const j = await r.json();
+    if (!j.ok) {
+      alert("No se pudo leer");
+      return;
+    }
+    document.getElementById("collJson").value = JSON.stringify(j.data, null, 2);
+  }
+  document.getElementById("btnLoadColls").addEventListener("click", loadColls);
+  document
+    .getElementById("selColl")
+    .addEventListener("change", (e) => loadOne(e.target.value));
+  document.getElementById("btnUse").addEventListener("click", async () => {
+    const name = document.getElementById("selColl").value;
+    await fetch("/api/collections/" + encodeURIComponent(name) + "/use", {
+      method: "POST",
+    });
+    loadColls();
+  });
+  document.getElementById("btnCreate").addEventListener("click", async () => {
+    const name = document.getElementById("newColl").value.trim();
+    if (!name) return;
+    const r = await fetch("/api/collections/" + encodeURIComponent(name), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: [] }),
+    });
+    if (r.ok) {
+      document.getElementById("newColl").value = "";
+      loadColls();
+    }
+  });
+  document.getElementById("btnSave").addEventListener("click", async () => {
+    const name = document.getElementById("selColl").value;
+    const txt = document.getElementById("collJson").value;
+    try {
+      JSON.parse(txt);
+    } catch (e) {
+      return alert("JSON inválido");
+    }
+    const r = await fetch("/api/collections/" + encodeURIComponent(name), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: txt,
+    });
+    document.getElementById("collStatus").textContent = r.ok
+      ? "Guardado"
+      : "Error";
+    setTimeout(
+      () => (document.getElementById("collStatus").textContent = ""),
+      1500
+    );
+  });
+  loadColls();
+</script>

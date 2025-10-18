@@ -1,15 +1,21 @@
-<h1>Ingresar</h1>
-<% if (typeof error !== 'undefined') { %>
-  <div class="alert"><%= error %></div>
-<% } %>
-<form method="post" action="/login" class="form compact">
-  <label>Usuario
-    <input type="text" name="username" required />
-  </label>
-  <label>Clave
-    <input type="password" name="password" required />
-  </label>
-  <div class="actions">
+<section class="login">
+  <h1>Acceso</h1>
+  <% if (error) { %>
+  <div class="alert" style="color: #b00"><%= error %></div>
+  <% } %>
+
+  <form
+    method="post"
+    action="/login<%= typeof next !== 'undefined' ? ('?next='+encodeURIComponent(next)) : '' %>"
+  >
+    <div>
+      <label>Usuario</label>
+      <input name="username" required autofocus />
+    </div>
+    <div>
+      <label>Contraseña</label>
+      <input type="password" name="password" required />
+    </div>
     <button type="submit">Entrar</button>
-  </div>
-</form>
+  </form>
+</section>

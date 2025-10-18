@@ -1,0 +1,283 @@
+<!-- imprimir_qr.ejs -->
+<header class="qr-header">
+  <h1>Imprimir varios QR</h1>
+  <div class="controls">
+    <div class="row span-12">
+      <label class="span-12">Base URL (se concatena el ID al final)</label>
+      <input
+        class="span-12"
+        id="baseUrl"
+        value="https://museoqr.netlify.app/viewer.html?id="
+      />
+    </div>
+
+    <div class="row span-12">
+      <label class="span-6">IDs (coma o salto de línea)</label>
+      <label class="span-6">o Generar rango (Start–End, con padding)</label>
+      <textarea
+        class="span-6"
+        id="idsText"
+        rows="3"
+        placeholder="001, 002, 003"
+      ></textarea>
+      <div class="span-6 grid6">
+        <div>
+          <label>Start</label
+          ><input id="rangeStart" type="number" placeholder="1" />
+        </div>
+        <div>
+          <label>End</label
+          ><input id="rangeEnd" type="number" placeholder="12" />
+        </div>
+        <div>
+          <label>Padding</label
+          ><input id="padLen" type="number" placeholder="3" />
+        </div>
+        <div class="span-3"><button id="btnGenRange">Generar IDs</button></div>
+      </div>
+    </div>
+
+    <div class="row span-12">
+      <div class="span-3">
+        <label>Tamaño QR (px)</label
+        ><input id="qrSize" type="number" value="160" min="80" max="512" />
+      </div>
+      <div class="span-3">
+        <label>Columnas</label
+        ><input id="cols" type="number" value="3" min="1" max="6" />
+      </div>
+      <div class="span-3">
+        <label>Gap (mm)</label
+        ><input id="gap" type="number" value="10" min="2" max="20" />
+      </div>
+      <div class="span-3">
+        <label>Etiqueta</label>
+        <select id="labelMode">
+          <option value="id">ID</option>
+          <option value="title">Título (si hay)</option>
+          <option value="both" selected>ID + Título</option>
+          <option value="none">Sin etiqueta</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row span-12 actions">
+      <button id="btnGenerar">Generar grilla</button>
+      <button id="btnBorrar">Borrar</button>
+      <button class="no-print" onclick="window.print()">Imprimir</button>
+      <span class="hint">Usá A4 y márgenes chicos.</span>
+    </div>
+  </div>
+</header>
+
+<main class="qr-main">
+  <div id="grid" aria-live="polite"></div>
+</main>
+
+<style>
+  :root {
+    --qr-size: 160px;
+    --cols: 3;
+    --gap: 10mm;
+    --card-padding: 6mm;
+    --label-size: 12px;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  .qr-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #f7f7f9;
+    border-bottom: 1px solid #ddd;
+    padding: 12px;
+  }
+  .qr-header h1 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+  }
+  .controls {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(12, 1fr);
+    align-items: center;
+  }
+  .controls label {
+    font-size: 12px;
+    color: #444;
+  }
+  .controls input,
+  .controls select,
+  .controls textarea,
+  .controls button {
+    font-size: 14px;
+    padding: 6px 8px;
+  }
+  .span-12 {
+    grid-column: span 12;
+  }
+  .span-6 {
+    grid-column: span 6;
+  }
+  .span-3 {
+    grid-column: span 3;
+  }
+  .row {
+    display: contents;
+  }
+  .grid6 {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    align-items: end;
+  }
+  .actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .hint {
+    font-size: 12px;
+    color: #666;
+  }
+  .qr-main {
+    padding: 12px;
+  }
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(var(--cols), 1fr);
+    gap: var(--gap);
+    align-items: start;
+  }
+  .qr-card {
+    border: 1px solid #e6e6e6;
+    border-radius: 10px;
+    padding: var(--card-padding);
+    page-break-inside: avoid;
+    break-inside: avoid;
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    background: #fff;
+  }
+  .qr-box {
+    width: var(--qr-size);
+    height: var(--qr-size);
+    display: grid;
+    place-items: center;
+    padding: 6px;
+    background: #fff;
+  }
+  .label {
+    text-align: center;
+    font-size: var(--label-size);
+    line-height: 1.2;
+    color: #222;
+    word-break: break-word;
+  }
+  .muted {
+    color: #777;
+    font-size: 11px;
+  }
+  @media print {
+    @page {
+      size: A4;
+      margin: 8mm;
+    }
+    .qr-header,
+    .no-print {
+      display: none !important;
+    }
+    #grid {
+      gap: 6mm;
+    }
+    .qr-card {
+      border: none;
+      padding: 0;
+    }
+  }
+</style>
+
+<script src="/js/qrcode.min.js"></script>
+<script>
+  const $ = (q) => document.querySelector(q);
+  const pad = (n, l) => ("" + n).padStart(l, "0");
+
+  $("#btnGenRange").addEventListener("click", () => {
+    const a = +$("#rangeStart").value,
+      b = +$("#rangeEnd").value,
+      L = +($("#padLen").value || 0);
+    if (Number.isNaN(a) || Number.isNaN(b) || a > b)
+      return alert("Rango inválido");
+    const list = [];
+    for (let x = a; x <= b; x++) list.push(L ? pad(x, L) : "" + x);
+    $("#idsText").value =
+      ($("#idsText").value.trim() ? $("#idsText").value + "\n" : "") +
+      list.join("\n");
+  });
+
+  $("#btnBorrar").addEventListener("click", () => {
+    $("#grid").innerHTML = "";
+  });
+
+  $("#btnGenerar").addEventListener("click", () => {
+    const base = $("#baseUrl").value.trim();
+    const size = Math.max(
+      80,
+      Math.min(1024, parseInt($("#qrSize").value || "160", 10))
+    );
+    const cols = Math.max(
+      1,
+      Math.min(8, parseInt($("#cols").value || "3", 10))
+    );
+    const gap = Math.max(
+      2,
+      Math.min(30, parseInt($("#gap").value || "10", 10))
+    );
+    const labelMode = $("#labelMode").value;
+
+    document.documentElement.style.setProperty("--qr-size", size + "px");
+    document.documentElement.style.setProperty("--cols", cols);
+    document.documentElement.style.setProperty("--gap", gap + "mm");
+
+    const ids = $("#idsText")
+      .value.split(/[\n,]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (!ids.length) return alert("Ingresá al menos un ID");
+
+    const grid = $("#grid");
+    grid.innerHTML = "";
+
+    for (const id of ids) {
+      const card = document.createElement("div");
+      card.className = "qr-card";
+      const box = document.createElement("div");
+      box.className = "qr-box";
+      const el = document.createElement("div");
+      box.appendChild(el);
+      card.appendChild(box);
+
+      if (labelMode !== "none") {
+        const cap = document.createElement("div");
+        cap.className = "label";
+        if (labelMode === "id") cap.textContent = id;
+        else if (labelMode === "title") cap.textContent = "(título opcional)";
+        else cap.innerHTML = `<strong>${id}</strong>`;
+        card.appendChild(cap);
+      }
+
+      grid.appendChild(card);
+      new QRCode(el, {
+        text: base + encodeURIComponent(id),
+        width: size,
+        height: size,
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+    }
+
+    grid.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+</script>

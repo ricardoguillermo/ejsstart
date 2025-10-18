@@ -1,11 +1,28 @@
-<nav class="nav">
+<nav
+  class="nav"
+  style="
+    display: flex;
+    background-color: beige;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 12px;
+  "
+>
   <a href="/">Inicio</a>
-  <% if (currentUser) { %>
-    <a href="/admin">Admin</a>
-    <form action="/logout" method="post" style="display:inline">
-      <button class="btn-link">Salir (<%= currentUser.username %>)</button>
-    </form>
+
+  <% /* Links “de trabajo” (solo si estás logueado) */ %> <% if (user) { %>
+  <a href="./admin">Admin</a>
+  <a href="/imprimir-qr">Imprimir QR</a>
+  <% } %>
+
+  <span style="flex: 1"></span>
+
+  <% if (user) { %>
+  <span style="opacity: 0.7">Hola, <%= user.username %></span>
+  <a href="/logout">Salir</a>
   <% } else { %>
-    <a href="/login">Ingresar</a>
+  <a href="/login">Entrar</a>
   <% } %>
 </nav>

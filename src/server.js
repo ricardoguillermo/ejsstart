@@ -26,7 +26,7 @@ dotenv.config(); // carga .env en dev
 console.log("[DATA_DIR]", process.env.DATA_DIR || "/var/data");
 console.log(
   "[Collections dir]",
-  (process.env.DATA_DIR || "./data") + "/collections"
+  `${process.env.DATA_DIR || "/var/data"}/collections`
 );
 
 const app = express();

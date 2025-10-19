@@ -34,7 +34,7 @@ export async function home(req, res) {
     ...new Set(items.map((it) => it.category).filter(Boolean)),
   ].sort();
 
-  res.render("index1", {
+  res.render("index", {
     title: `Catálogo — ${current}`,
     q: req.query.q || "",
     categories,

@@ -1,7 +1,6 @@
 // src/routes/media.js
 import { Router } from "express";
 import multer from "multer";
-import fetch from "node-fetch"; // (ok en Node 22; si no lo usás, podés quitarlo)
 import path from "path";
 import mime from "mime-types";
 

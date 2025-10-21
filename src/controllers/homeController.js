@@ -5,6 +5,9 @@ const DATA_DIR = process.env.DATA_DIR || "/var/data";
 const api = createCollectionsAPI({ dataDir: DATA_DIR });
 await api.init();
 
+const pullRaw = process.env.BUNNY_PULLZONE_HOST || "";
+const cdnHost = pullRaw.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+
 export async function home(req, res) {
   // 👇 Garantiza nombre válido y colección existente
   let current = await api.getCurrentName();
@@ -40,5 +43,6 @@ export async function home(req, res) {
     categories,
     query: { category: cat },
     items,
+    cdnHost,
   });
 }

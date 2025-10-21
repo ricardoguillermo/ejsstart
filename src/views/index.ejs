@@ -1,32 +1,125 @@
-<section class="hero">
-  <h1>Catálogo</h1>
-  <form class="filters" method="get" action="/">
-    <input type="search" name="q" placeholder="Buscar..." value="<%= q %>" />
-    <select name="category">
-      <option value="">Todas las categorías</option>
-      <% categories.forEach(c => { %>
-        <option value="<%= c %>" <%= (String(c)===String(query.category)) ? 'selected' : '' %>><%= c %></option>
-      <% }) %>
-    </select>
-    <button>Filtrar</button>
-  </form>
-</section>
+<% /* Normaliza el host del CDN que viene desde el controller (cdnHost) */ var
+cdn = ''; if (typeof cdnHost !== 'undefined' && cdnHost) { cdn = 'https://' +
+String(cdnHost).replace(/^https?:\/\//, '').replace(/\/+$/, ''); } /* Asegura la
+lista */ var list = Array.isArray(items) ? items : []; %>
 
-<section class="grid">
-  <% if (items.length === 0) { %>
-    <p>No hay resultados.</p>
+
+<%
+// valores actuales para mantener el estado del filtro
+var _q   = (typeof q === 'string' ? q : '');
+var _cat = (query && query.category) ? String(query.category) : '';
+var _cats = Array.isArray(categories) ? categories : [];
+%>
+
+<form method="get" class="filterbar" style="display:flex;gap:12px;align-items:center;margin:10px 0 18px">
+  <input
+    type="text"
+    name="q"
+    placeholder="Buscar..."
+    value="<%= _q %>"
+    style="flex:1;min-width:220px;padding:10px 12px;border:1px solid #ddd;border-radius:10px"
+  />
+
+  <select name="category" style="padding:10px 12px;border:1px solid #ddd;border-radius:10px;min-width:220px">
+    <option value="">Todas las categorías</option>
+    <% _cats.forEach(function(c){ %>
+      <option value="<%= c %>" <%= (_cat === String(c) ? 'selected' : '') %>><%= c %></option>
+    <% }) %>
+  </select>
+
+  <button type="submit" style="padding:10px 16px;border:none;border-radius:10px;background:#1f7a86;color:#fff;cursor:pointer">
+    Filtrar
+  </button>
+
+  <% if ((Array.isArray(list) ? list.length : 0) > 0) { %>
+    <span style="opacity:.6;margin-left:6px"><%= list.length %> resultados</span>
   <% } %>
-  <% items.forEach(item => { %>
-    <article class="card">
-      <a href="/items/<%= item.id %>">
-        <img src="<%= item.imageUrl || 'https://placehold.co/600x400?text=Imagen' %>" alt="<%= item.title %>" />
-      </a>
-      <div class="card-body">
-        <h3><a href="/items/<%= item.id %>"><%= item.title %></a></h3>
-        <% if (item.category) { %><span class="badge"><%= item.category %></span><% } %>
-        <p><%= (item.description || '').slice(0, 160) %>...</p>
-        <a class="btn" href="/items/<%= item.id %>">Ver</a>
+</form>
+
+<h1 class="page-title">Catálogo</h1>
+
+<div class="grid">
+  <% for (var i = 0; i < list.length; i++) { var it = list[i] || {}; var raw =
+  (it.imageUrl || '').toString().trim(); var isAbs = /^https?:\/\//i.test(raw);
+  var src = isAbs ? raw : (cdn ? (cdn + '/' + raw.replace(/^\/+/, '')) : raw);
+  if (!src) { var t = encodeURIComponent(it.title || 'Imagen'); src =
+  'https://placehold.co/800x500?text=' + t; } %>
+
+  <article class="card">
+    <a class="card-img" href="#">
+      <img
+        src="<%= src %>"
+        alt="<%= it.title || 'Imagen' %>"
+        loading="lazy"
+        style="
+          width: 100%;
+          height: 280px;
+          object-fit: cover;
+          border-radius: 12px;
+          background: #eee;
+        "
+      />
+    </a>
+
+    <div class="card-body">
+      <h2 class="card-title" style="margin: 6px 0 8px">
+        <a href="#"><%= it.title || 'Sin título' %></a>
+      </h2>
+
+      <% if (it.category) { %>
+      <span
+        class="badge"
+        style="
+          display: inline-block;
+          background: #d8ece8;
+          color: #1c6b69;
+          border-radius: 16px;
+          padding: 6px 12px;
+          margin: 4px 0;
+        "
+      >
+        <%= it.category %>
+      </span>
+      <% } %>
+
+      <p class="card-text">
+        <%= (it.description || '').slice(0,120) %><%= (it.description ||
+        '').length > 120 ? '…' : '' %>
+      </p>
+
+      <div class="card-actions" style="margin-top: 10px">
+        <a
+          class="btn"
+          href="#"
+          style="
+            display: inline-block;
+            background: #1f7a86;
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 10px;
+            text-decoration: none;
+          "
+          >Ver</a
+        >
       </div>
-    </article>
-  <% }) %>
-</section>
+    </div>
+  </article>
+  <% } %>
+</div>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
+  .card-body {
+    padding: 18px;
+  }
+</style>
